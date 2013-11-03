@@ -7,6 +7,11 @@ from rango.models import Page
 def encode_category_to_url(category):
     category.url = category.name.replace(' ', '_')
 
+def decode_url(url_to_decode):
+    category_name = url_to_decode.replace('_', ' ')
+    print 'hello >>>>' + category_name
+    return category_name
+
 def index(request):
     # Obtain the context from the HTTP request.
     context = RequestContext(request)
@@ -69,6 +74,7 @@ def category(request, category_name_url):
         # We also add the category object from the database to the context dictionary.
         # We'll use this in the template to verify that the category exists.
         context_dict['category'] = category
+        context_dict['category_name_url'] = category_name_url
     except Category.DoesNotExist:
         # We get here if we didn't find the specified category.
         # Don't do anything - the template displays the "no category" message for us.
@@ -105,3 +111,38 @@ def add_category(request):
     # Bad form (or form details), no form supplied...
     # Render the form with error messages (if any).
     return render_to_response('rango/add_category.html', {'form': form}, context)
+
+from rango.forms import PageForm
+def add_page(request, category_name_url):
+    context = RequestContext(request)
+
+    category_name = decode_url(category_name_url)
+    if request.method == 'POST':
+        form = PageForm(request.POST)
+
+        if form.is_valid():
+            # This time we cannot commit straight away.
+            # Not all fields are automatically populated!
+            page = form.save(commit=False)
+
+            # Retrieve the associated Category object so we can add it.
+            cat = Category.objects.get(name=category_name)
+            page.category = cat
+
+            # Also, create a default value for the number of views.
+            page.views = 0
+
+            # With this, we can then save our new model instance.
+            page.save()
+
+            # Now that the page is saved, display the category instead.
+            return category(request, category_name)
+        else:
+            print form.errors
+    else:
+        form = PageForm()
+
+    return render_to_response( 'rango/add_page.html',
+            {'category_name_url': category_name_url,
+             'category_name': category_name, 'form': form},
+             context)
