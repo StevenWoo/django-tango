@@ -2,7 +2,7 @@
 import os
 PROJECT_PATH = os.getcwd()
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-
+LOGIN_URL ='/rango/login/'
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
