@@ -7,6 +7,11 @@
 {% block body_block %}
   <h1>Rango says...</h1>
   hello world! <strong>{{ aboutmessage }}</strong><br />
-
+  {% if visits == 0 %}
+      <p>Your first visit!</p>
+  {% else %}
+   	  <p>You have been here {{ visits }} times </p>
+			<p> {{ last_visit }} </p>
+  {% endif %}
   <img src="{% static "logo.png" %}" alt="Picture of Rango" /> <!-- New line -->
 {% endblock %}

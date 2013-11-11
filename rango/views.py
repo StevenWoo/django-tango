@@ -5,8 +5,9 @@ from rango.models import Category
 from rango.models import Page
 from django.contrib.auth import authenticate, login
 from django.http import HttpResponseRedirect
-
 from django.contrib.auth.decorators import login_required
+from datetime import datetime
+
 def encode_category_to_url(category):
     category.url = category.name.replace(' ', '_')
 
@@ -33,8 +34,30 @@ def index(request):
         encode_category_to_url(category)
 
 
-    # Render the response and return to the client.
+    # Obtain our Response object early so we can add cookie information.
+
+    if request.session.get('last_visit'):
+        # The session has a value for the last visit
+        last_visit_time = request.session.get('last_visit')
+        visits = request.session.get('visits', 0)
+
+        if (datetime.now() - datetime.strptime(last_visit_time[:-7], "%Y-%m-%d %H:%M:%S")).days > 0:
+            request.session['visits'] = visits + 1
+            request.session['last_visit'] = str(datetime.now())
+    else:
+        # The get returns None, and the session does not have a value for the last visit.
+        request.session['last_visit'] = str(datetime.now())
+        request.session['visits'] = 1
+
+
+
+    # Render and return the rendered response back to the user.
     return render_to_response('rango/index.html', context_dict, context)
+
+
+# prior to cookie tracking 
+#    # Render the response and return to the client.
+#    return render_to_response('rango/index.html', context_dict, context)
 
 
 
@@ -45,8 +68,14 @@ def about(request):
     context = RequestContext(request)
 
     context_dict = {'aboutmessage': "I am from the context about"}
+    # If the visits session varible exists, take it and use it.
+    # If it doesn't, we haven't visited the site so set the count to zero.
+    if request.session.get('visits'):
+        count = request.session.get('visits')
+    else:
+        count = 0
 
-    return render_to_response('rango/about.html', context_dict, context)
+    return render_to_response('rango/about.html', { 'visits':count, 'last_visit':request.session['last_visit']},  context)
 #    return HttpResponse("Rango says About me!<a href='/rango'>Main</a>")
 
 def category(request, category_name_url):
