@@ -7,6 +7,7 @@ from django.contrib.auth import authenticate, login
 from django.http import HttpResponseRedirect
 from django.contrib.auth.decorators import login_required
 from datetime import datetime
+from rango.bing_search import run_query
 
 def encode_category_to_url(category):
     category.url = category.name.replace(' ', '_')
@@ -301,3 +302,16 @@ def user_logout(request):
 
     # Take the user back to the homepage.
     return HttpResponseRedirect('/rango/')
+
+def search(request):
+    context = RequestContext(request)
+    result_list = []
+
+    if request.method == 'POST':
+        query = request.POST['query'].strip()
+
+        if query:
+            # Run our Bing function to get the results list!
+            result_list = run_query(query)
+
+    return render_to_response('rango/search.html', {'result_list': result_list}, context)
